@@ -229,9 +229,9 @@
     <!-- Credits Section -->
     <footer class="credits-section">
       <div class="credits-content">
-        <div class="poster-image">
+        <a href="https://x.com/ANISONGSLIDE/status/1995063714995966253" target="_blank" rel="noopener noreferrer" class="poster-image">
           <img src="{base}/data/poster.jpeg" alt="2025 아로아로 BEST 애니송 포스터" />
-        </div>
+        </a>
         <div class="credits-text">
           <h3>Credits</h3>
           <p class="event-title">아로아로 카운트다운 2025-2026 ✧</p>
@@ -240,7 +240,9 @@
           {#if djs.length > 0}
             <p class="dj-list">{getRandomDJNames()}</p>
           {/if}
-          <p class="hashtag">#아로아로카운트다운</p>
+          <a href="https://fixupx.com/hashtag/%EC%95%84%EB%A1%9C%EC%95%84%EB%A1%9C%EC%B9%B4%EC%9A%B4%ED%8A%B8%EB%8B%A4%EC%9A%B4" target="_blank" rel="noopener noreferrer" class="hashtag-link">
+            <p class="hashtag">#아로아로카운트다운</p>
+          </a>
         </div>
       </div>
     </footer>
