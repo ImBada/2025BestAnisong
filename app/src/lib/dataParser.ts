@@ -1,7 +1,8 @@
 import type { Song, DJ } from './types';
+import { base } from '$app/paths';
 
 export async function parseSongs(): Promise<Map<number, Song>> {
-	const response = await fetch('/data/songs.csv');
+	const response = await fetch(`${base}/data/songs.csv`);
 	const text = await response.text();
 	const lines = text.split('\n').slice(1); // Skip header
 
@@ -49,7 +50,7 @@ export async function parseSongs(): Promise<Map<number, Song>> {
 }
 
 export async function parseDJs(): Promise<DJ[]> {
-	const response = await fetch('/data/djs.csv');
+	const response = await fetch(`${base}/data/djs.csv`);
 	const text = await response.text();
 	const lines = text.split('\n').slice(1); // Skip header
 
