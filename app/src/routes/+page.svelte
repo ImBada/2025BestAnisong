@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { parseSongs, parseDJs } from "$lib/dataParser";
   import type { Song, DJ } from "$lib/types";
+  import { base } from "$app/paths";
 
   let songs: Map<number, Song> = new Map();
   let djs: DJ[] = [];
@@ -15,6 +16,21 @@
     id_4: "4분기",
     all: "올해의 애니송",
   };
+
+  function shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  function getRandomDJNames(): string {
+    const djNames = djs.map((dj) => dj.name);
+    const shuffled = shuffleArray(djNames);
+    return shuffled.join(" • ");
+  }
 
   onMount(async () => {
     try {
@@ -80,14 +96,20 @@
 
 <svelte:head>
   <title>2025 아로아로 BEST 애니송 어워드</title>
-  <script type="module" crossorigin src="https://glass.danilofiumi.com/web-comps/boundle.js"></script>
+  <script
+    type="module"
+    crossorigin
+    src="https://glass.danilofiumi.com/web-comps/boundle.js"
+  ></script>
 </svelte:head>
 
 <main>
   <div class="container">
     <header>
-      <h1>🎵 2025 아로아로 BEST 애니송 🎵</h1>
-      <p class="subtitle">아로아로 디제이들이 선정한 최고의 애니메이션 음악</p>
+      <h1>2025 아로아로 BEST 애니송</h1>
+      <p class="subtitle">
+        아로아로 카운트다운 2026에 참여한 DJ/VJ들이 선정한 올해의 애니메이션 노래
+      </p>
     </header>
 
     {#if loading}
@@ -100,7 +122,7 @@
       <section class="playlist-section">
         <div class="playlist-header">
           <h2>🎧 전체 플레이리스트</h2>
-          <p>2025년 아로아로 BEST 애니송 전곡 듣기</p>
+          <p>선정된 모든 노래가 담긴 플레이리스트입니다.</p>
         </div>
         <div class="playlist-widget">
           <iframe
@@ -202,6 +224,25 @@
         </div>
       </section>
     {/if}
+
+    <!-- Credits Section -->
+    <footer class="credits-section">
+      <div class="credits-content">
+        <div class="poster-image">
+          <img src="/data/poster.jpeg" alt="2025 아로아로 BEST 애니송 포스터" />
+        </div>
+        <div class="credits-text">
+          <h3>Credits</h3>
+          <p class="event-title">아로아로 카운트다운 2025-2026 ✧</p>
+          <p class="event-date">2025년 12월 31일 (수) 밤</p>
+          <p class="event-location">합정 아로아로홀</p>
+          {#if djs.length > 0}
+            <p class="dj-list">{getRandomDJNames()}</p>
+          {/if}
+          <p class="hashtag">#아로아로카운트다운</p>
+        </div>
+      </div>
+    </footer>
   </div>
 </main>
 
@@ -211,74 +252,56 @@
     padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
       "Helvetica Neue", Arial, sans-serif;
-    background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
+    background-color: #000000;
   }
 
-  :global(body::before) {
+  main {
+    background-color: #000000;
+    background-image: url("/data/bg.jpeg");
+    background-size: 100% auto;
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    min-height: 100vh;
+    position: relative;
+  }
+
+  main::before {
     content: "";
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: radial-gradient(2px 2px at 20px 30px, white, transparent),
-      radial-gradient(2px 2px at 60px 70px, white, transparent),
-      radial-gradient(1px 1px at 50px 50px, white, transparent),
-      radial-gradient(1px 1px at 130px 80px, white, transparent),
-      radial-gradient(2px 2px at 90px 10px, white, transparent),
-      radial-gradient(1px 1px at 10px 90px, white, transparent),
-      radial-gradient(1px 1px at 150px 40px, white, transparent),
-      radial-gradient(2px 2px at 180px 120px, white, transparent);
-    background-repeat: repeat;
-    background-size: 200px 200px;
-    opacity: 0.4;
+    background: rgba(0, 0, 0, 0.3);
     pointer-events: none;
     z-index: 0;
   }
 
-  :global(body::after) {
+  main::after {
     content: "";
     position: fixed;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(
-        circle at 20% 50%,
-        rgba(120, 119, 198, 0.3),
-        transparent 25%
-      ),
-      radial-gradient(
-        circle at 80% 80%,
-        rgba(138, 43, 226, 0.2),
-        transparent 25%
-      ),
-      radial-gradient(circle at 40% 20%, rgba(75, 0, 130, 0.2), transparent 25%);
-    animation: drift 30s ease-in-out infinite;
+    bottom: 0;
+    right: 2rem;
+    width: 400px;
+    height: 600px;
+    background-image: url("/data/standing.png");
+    background-size: contain;
+    background-position: bottom right;
+    background-repeat: no-repeat;
     pointer-events: none;
-    z-index: 0;
-  }
-
-  @keyframes drift {
-    0%,
-    100% {
-      transform: translate(0, 0) rotate(0deg);
-    }
-    33% {
-      transform: translate(10px, -10px) rotate(5deg);
-    }
-    66% {
-      transform: translate(-5px, 5px) rotate(-5deg);
-    }
+    z-index: 1;
   }
 
   .container {
     max-width: 1200px;
     margin: 0 auto;
     padding: 1.5rem 1rem;
+    position: relative;
+    z-index: 2;
   }
 
   header {
@@ -391,8 +414,9 @@
     background: rgba(255, 255, 255, 0.25);
     border-color: rgba(255, 255, 255, 0.4);
     color: white;
-    box-shadow: 0 8px 32px 0 rgba(255, 255, 255, 0.2),
-                inset 0 0 20px rgba(255, 255, 255, 0.1);
+    box-shadow:
+      0 8px 32px 0 rgba(255, 255, 255, 0.2),
+      inset 0 0 20px rgba(255, 255, 255, 0.1);
   }
 
   .awards-section {
@@ -554,6 +578,99 @@
     align-self: flex-start;
   }
 
+  .credits-section {
+    margin-top: 4rem;
+    padding: 3rem 1rem;
+  }
+
+  .credits-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 20px;
+    backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+  }
+
+  .poster-image {
+    width: 150px;
+    flex-shrink: 0;
+  }
+
+  .poster-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .credits-text {
+    color: white;
+    text-align: left;
+  }
+
+  .credits-text h3 {
+    font-size: 1.5rem;
+    margin: 0 0 0.5rem 0;
+    color: white;
+  }
+
+  .credits-text p {
+    margin: 0.25rem 0;
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .credits-text .event-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.5rem;
+  }
+
+  .credits-text .event-date {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 500;
+  }
+
+  .credits-text .event-location {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .credits-text .dj-list {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.6;
+    margin-top: 0.75rem;
+    font-weight: 500;
+  }
+
+  .credits-text .hashtag {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 0.75rem;
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .credits-text .credit-small {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 0.5rem;
+  }
+
   @media (max-width: 968px) {
     .card-layout {
       grid-template-columns: 1fr;
@@ -609,6 +726,19 @@
 
     .card-layout {
       gap: 1rem;
+    }
+
+    .credits-content {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .credits-text {
+      text-align: center;
+    }
+
+    .poster-image {
+      width: 120px;
     }
   }
 </style>
