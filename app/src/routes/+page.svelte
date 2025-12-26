@@ -103,7 +103,8 @@
   ></script>
 </svelte:head>
 
-<main>
+<main style="background-image: url('{base}/data/bg.jpeg')">
+  <div class="character-image" style="background-image: url('{base}/data/standing.png')"></div>
   <div class="container">
     <header>
       <h1>2025 아로아로 BEST 애니송</h1>
@@ -229,7 +230,7 @@
     <footer class="credits-section">
       <div class="credits-content">
         <div class="poster-image">
-          <img src="/data/poster.jpeg" alt="2025 아로아로 BEST 애니송 포스터" />
+          <img src="{base}/data/poster.jpeg" alt="2025 아로아로 BEST 애니송 포스터" />
         </div>
         <div class="credits-text">
           <h3>Credits</h3>
@@ -260,7 +261,6 @@
 
   main {
     background-color: #000000;
-    background-image: url("/data/bg.jpeg");
     background-size: 100% auto;
     background-position: center top;
     background-repeat: no-repeat;
@@ -281,14 +281,12 @@
     z-index: 0;
   }
 
-  main::after {
-    content: "";
+  .character-image {
     position: fixed;
     bottom: 0;
     right: 2rem;
     width: 400px;
     height: 600px;
-    background-image: url("/data/standing.png");
     background-size: contain;
     background-position: bottom right;
     background-repeat: no-repeat;
