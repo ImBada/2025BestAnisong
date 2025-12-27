@@ -451,6 +451,29 @@
           </a>
         </div>
       </div>
+
+      <div class="archive-button-container">
+        <a
+          href="https://x.com/ANISONGSLIDE/status/1741443731742761217/photo/1"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="archive-button"
+        >
+          2023 아카이브 보기
+        </a>
+        <a
+          href="https://imbada.github.io/2024BestAnisong/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="archive-button"
+        >
+          2024 아카이브 보기
+        </a>
+      </div>
+
+      <div class="copyright">
+        <p>© 2025 BADA and AROARO COUNTDOWN.</p>
+      </div>
     </footer>
   </div>
 </main>
@@ -959,6 +982,51 @@
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.6);
     margin-top: 0.5rem;
+  }
+
+  .archive-button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  .archive-button {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.15);
+  }
+
+  .archive-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.35);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px 0 rgba(31, 38, 135, 0.25);
+  }
+
+  .copyright {
+    text-align: center;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .copyright p {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.75rem;
+    margin: 0;
+    font-weight: 400;
   }
 
   @media (max-width: 968px) {
