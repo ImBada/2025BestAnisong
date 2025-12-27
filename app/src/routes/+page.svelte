@@ -6,8 +6,10 @@
 
   let songs: Map<number, Song> = new Map();
   let djs: DJ[] = [];
+  let shuffledDJs: DJ[] = [];
   let loading = true;
   let selectedQuarter: "id_1" | "id_2" | "id_3" | "id_4" | "all" = "id_1";
+  let selectedDJ: string | null = null;
 
   const quarterNames = {
     id_1: "1분기",
@@ -36,6 +38,7 @@
     try {
       songs = await parseSongs();
       djs = await parseDJs();
+      shuffledDJs = shuffleArray(djs);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -61,33 +64,146 @@
 
   function groupSongsByDJ(
     quarter: typeof selectedQuarter
-  ): Array<{ song: Song; djs: string[] }> {
+  ): Array<{
+    song: Song;
+    djs: string[];
+    quarterPicks?: Map<string, string[]>;
+  }> {
     const songMap = new Map<number, string[]>();
 
-    // Group DJs by song ID
-    for (const dj of djs) {
-      const songId = dj[quarter];
-      if (songId !== null) {
-        if (!songMap.has(songId)) {
-          songMap.set(songId, []);
+    // Track which quarters the selected DJ picked each song
+    const djQuartersMap = new Map<
+      number,
+      Array<"id_1" | "id_2" | "id_3" | "id_4" | "all">
+    >();
+
+    // If a specific DJ is selected, show all their picks across all quarters including "all"
+    if (selectedDJ) {
+      const selectedDJData = djs.find((dj) => dj.name === selectedDJ);
+      if (selectedDJData) {
+        const quarters: Array<"id_1" | "id_2" | "id_3" | "id_4" | "all"> = [
+          "id_1",
+          "id_2",
+          "id_3",
+          "id_4",
+          "all",
+        ];
+        for (const q of quarters) {
+          const songId = selectedDJData[q];
+          if (songId !== null) {
+            if (!songMap.has(songId)) {
+              songMap.set(songId, []);
+            }
+            songMap.get(songId)!.push(selectedDJData.name);
+
+            // Track which quarter this DJ selected this song
+            if (!djQuartersMap.has(songId)) {
+              djQuartersMap.set(songId, []);
+            }
+            djQuartersMap.get(songId)!.push(q);
+          }
         }
-        songMap.get(songId)!.push(dj.name);
+      }
+    } else {
+      // Normal grouping by quarter
+      for (const dj of djs) {
+        const songId = dj[quarter];
+        if (songId !== null) {
+          if (!songMap.has(songId)) {
+            songMap.set(songId, []);
+          }
+          songMap.get(songId)!.push(dj.name);
+        }
       }
     }
 
     // Convert to array with song details
-    const result: Array<{ song: Song; djs: string[] }> = [];
+    const result: Array<{
+      song: Song;
+      djs: string[];
+      quarterPicks?: Map<string, string[]>;
+    }> = [];
     for (const [songId, djNames] of songMap.entries()) {
       const song = songs.get(songId);
       if (song) {
-        result.push({ song, djs: djNames });
+        const entry: {
+          song: Song;
+          djs: string[];
+          quarterPicks?: Map<string, string[]>;
+        } = {
+          song,
+          djs: djNames,
+        };
+
+        // Show quarter info when viewing a specific DJ's picks or "all" category
+        if (selectedDJ) {
+          // DJ별 화면: 해당 DJ가 선정한 분기만 표시
+          const selectedDJQuarters = djQuartersMap.get(songId);
+          if (selectedDJQuarters) {
+            const quarterPicks = new Map<string, string[]>();
+
+            // 모든 분기를 확인하면서 다른 DJ들 찾기
+            const quarters: Array<"id_1" | "id_2" | "id_3" | "id_4" | "all"> = [
+              "id_1",
+              "id_2",
+              "id_3",
+              "id_4",
+              "all",
+            ];
+            for (const q of quarters) {
+              const djsForQuarter: string[] = [];
+              for (const dj of djs) {
+                if (dj[q] === songId) {
+                  djsForQuarter.push(dj.name);
+                }
+              }
+              if (djsForQuarter.length > 0) {
+                quarterPicks.set(quarterNames[q], djsForQuarter);
+              }
+            }
+
+            if (quarterPicks.size > 0) {
+              entry.quarterPicks = quarterPicks;
+            }
+          }
+        } else if (quarter === "all") {
+          // 올해의 애니송 화면: 모든 분기 정보 표시
+          const quarterPicks = new Map<string, string[]>();
+          const quarters: Array<"id_1" | "id_2" | "id_3" | "id_4" | "all"> = [
+            "id_1",
+            "id_2",
+            "id_3",
+            "id_4",
+            "all",
+          ];
+
+          for (const q of quarters) {
+            const djsForQuarter: string[] = [];
+            for (const dj of djs) {
+              if (dj[q] === songId) {
+                djsForQuarter.push(dj.name);
+              }
+            }
+            if (djsForQuarter.length > 0) {
+              quarterPicks.set(quarterNames[q], djsForQuarter);
+            }
+          }
+
+          if (quarterPicks.size > 0) {
+            entry.quarterPicks = quarterPicks;
+          }
+        }
+
+        result.push(entry);
       }
     }
 
-    // Shuffle array using Fisher-Yates algorithm
-    for (let i = result.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [result[i], result[j]] = [result[j], result[i]];
+    // Shuffle array using Fisher-Yates algorithm (except when viewing specific DJ)
+    if (!selectedDJ) {
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
     }
 
     return result;
@@ -139,23 +255,50 @@
         </div>
       </section>
 
-      <nav class="quarter-nav">
-        {#each Object.entries(quarterNames) as [key, label]}
+      <div class="quarter-nav-wrapper">
+        <nav class="quarter-nav">
+          {#each Object.entries(quarterNames) as [key, label]}
+            <button
+              class="quarter-btn"
+              class:active={selectedQuarter === key && selectedDJ === null}
+              onclick={() => {
+                selectedQuarter = key as typeof selectedQuarter;
+                selectedDJ = null;
+              }}
+            >
+              {label}
+            </button>
+          {/each}
+        </nav>
+      </div>
+
+      <nav class="dj-nav">
+        {#each shuffledDJs as dj}
           <button
-            class="quarter-btn"
-            class:active={selectedQuarter === key}
-            onclick={() => (selectedQuarter = key as typeof selectedQuarter)}
+            class="dj-btn"
+            class:active={selectedDJ === dj.name}
+            onclick={() => {
+              if (selectedDJ === dj.name) {
+                selectedDJ = null;
+              } else {
+                selectedDJ = dj.name;
+              }
+            }}
           >
-            {label}
+            {dj.name}
           </button>
         {/each}
       </nav>
 
       <section class="awards-section">
-        <h2>{quarterNames[selectedQuarter]}</h2>
+        <h2>
+          {selectedDJ
+            ? `${selectedDJ}의 선정곡`
+            : quarterNames[selectedQuarter]}
+        </h2>
 
         <div class="awards-list">
-          {#each groupSongsByDJ(selectedQuarter) as { song, djs }}
+          {#each groupSongsByDJ(selectedQuarter) as { song, djs, quarterPicks }}
             <article class="award-card">
               <div class="card-layout">
                 <!-- Left: Spotify Player -->
@@ -179,9 +322,20 @@
                 <!-- Right: Song Info -->
                 <div class="info-section">
                   <div class="dj-badges">
-                    {#each djs as djName}
-                      <span class="dj-badge">{djName}</span>
-                    {/each}
+                    {#if selectedDJ && quarterPicks}
+                      <!-- DJ별 화면: 해당 DJ가 선정한 분기만 표시 -->
+                      {#each Array.from(quarterPicks.entries()) as [quarterName, quarterDJs]}
+                        {#if quarterDJs.includes(selectedDJ)}
+                          <span class="dj-badge quarter-badge"
+                            >{quarterName}</span
+                          >
+                        {/if}
+                      {/each}
+                    {:else}
+                      {#each djs as djName}
+                        <span class="dj-badge">{djName}</span>
+                      {/each}
+                    {/if}
                   </div>
 
                   <h3 class="song-title">{song.곡명}</h3>
@@ -216,6 +370,46 @@
                       <span class="label">크레딧</span>
                       <span class="value credit">{song.크레딧}</span>
                     </div>
+
+                    {#if quarterPicks && quarterPicks.size > 0}
+                      {#if selectedDJ}
+                        <!-- DJ별 화면: 해당 DJ가 선정한 분기 표시 및 다른 선정자 -->
+                        {@const djPickedQuarters = Array.from(
+                          quarterPicks.entries()
+                        )
+                          .filter(([quarterName, quarterDJs]) =>
+                            quarterDJs.includes(selectedDJ)
+                          )
+                          .map(([quarterName]) => quarterName)}
+                        {@const allOtherDJs = Array.from(
+                          quarterPicks.entries()
+                        ).flatMap(([quarterName, quarterDJs]) =>
+                          quarterDJs
+                            .filter((dj) => dj !== selectedDJ)
+                            .map((dj) => `${dj} (${quarterName})`)
+                        )}
+                        {#if allOtherDJs.length > 0}
+                          <div class="info-row">
+                            <span class="label">다른 선정자</span>
+                            <span class="value quarter-picks">
+                              {allOtherDJs.join(", ")}
+                            </span>
+                          </div>
+                        {/if}
+                      {:else}
+                        <!-- 분기별/올해의 애니송 화면: "올해의 애니송" 화면에서 "올해의 애니송 선정" 항목 숨김 -->
+                        {#each Array.from(quarterPicks.entries()) as [quarterName, quarterDJs]}
+                          {#if !(selectedQuarter === "all" && quarterName === "올해의 애니송")}
+                            <div class="info-row">
+                              <span class="label">{`${quarterName} 선정`}</span>
+                              <span class="value quarter-picks">
+                                {quarterDJs.join(", ")}
+                              </span>
+                            </div>
+                          {/if}
+                        {/each}
+                      {/if}
+                    {/if}
                   </div>
                 </div>
               </div>
@@ -248,7 +442,7 @@
             <p class="dj-list">{getRandomDJNames()}</p>
           {/if}
           <a
-            href="https://fixupx.com/hashtag/%EC%95%84%EB%A1%9C%EC%95%84%EB%A1%9C%EC%B9%B4%EC%9A%B4%ED%8A%B8%EB%8B%A4%EC%9A%B4"
+            href="https://x.com/hashtag/%EC%95%84%EB%A1%9C%EC%95%84%EB%A1%9C%EC%B9%B4%EC%9A%B4%ED%8A%B8%EB%8B%A4%EC%9A%B4"
             target="_blank"
             rel="noopener noreferrer"
             class="hashtag-link"
@@ -389,16 +583,74 @@
     padding: 4px;
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.18);
-    backdrop-filter: blur(16px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
   }
 
-  .quarter-nav {
+  .quarter-nav-wrapper {
     display: flex;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
     justify-content: center;
+    margin-bottom: 2rem;
+  }
+
+  .quarter-nav {
+    display: inline-flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 25px;
+    backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  }
+
+  .dj-nav {
+    display: flex;
+    gap: 0.3rem;
+    margin-bottom: 2rem;
+    margin-top: 1rem;
+    flex-wrap: nowrap;
+    justify-content: center;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .dj-btn {
+    padding: 0.3rem 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.85);
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.1);
+    white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .dj-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px 0 rgba(31, 38, 135, 0.2);
+  }
+
+  .dj-btn.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    color: white;
+    box-shadow:
+      0 4px 16px 0 rgba(255, 255, 255, 0.15),
+      inset 0 0 10px rgba(255, 255, 255, 0.08);
   }
 
   .quarter-btn {
@@ -411,7 +663,7 @@
     font-size: 1rem;
     font-weight: 600;
     transition: all 0.3s ease;
-    backdrop-filter: blur(16px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
   }
 
@@ -455,8 +707,8 @@
   }
 
   .award-card {
-    background: rgba(255, 255, 255, 0.12);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 16px;
     padding: 1.5rem;
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
@@ -465,8 +717,8 @@
   }
 
   .award-card:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
     box-shadow: 0 12px 48px 0 rgba(31, 38, 135, 0.3);
     transform: translateY(-2px);
   }
@@ -512,6 +764,12 @@
     font-size: 0.9rem;
     backdrop-filter: blur(8px) saturate(180%);
     box-shadow: 0 4px 16px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .quarter-badge {
+    background: rgba(100, 150, 255, 0.25);
+    border: 1px solid rgba(100, 150, 255, 0.4);
+    color: rgba(200, 220, 255, 1);
   }
 
   .song-details {
@@ -560,6 +818,11 @@
   .credit {
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.8);
+  }
+
+  .quarter-picks {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.85);
   }
 
   .tag {
@@ -694,6 +957,19 @@
     }
   }
 
+  @media (max-width: 1000px) {
+    .dj-nav {
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+
+    .dj-btn {
+      flex: 0 1 auto;
+      font-size: 0.75rem;
+      padding: 0.35rem 0.6rem;
+    }
+  }
+
   @media (max-width: 768px) {
     h1 {
       font-size: 2rem;
@@ -715,17 +991,29 @@
       font-size: 0.85rem;
     }
 
+    .quarter-nav {
+      justify-content: center;
+    }
+
     .quarter-btn {
       font-size: 0.9rem;
       padding: 0.6rem 1.2rem;
     }
 
+    .dj-nav {
+      padding: 0.4rem;
+    }
+
     .awards-section {
       padding: 1rem;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px) saturate(180%);
     }
 
     .award-card {
       padding: 1rem;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px) saturate(180%);
     }
 
     .info-row {
