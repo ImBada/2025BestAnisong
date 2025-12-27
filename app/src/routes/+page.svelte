@@ -255,7 +255,7 @@
         </div>
       </section>
 
-      <div class="quarter-nav-wrapper">
+      <div class="quarter-nav-wrapper" class:sticky={selectedDJ === null}>
         <nav class="quarter-nav">
           {#each Object.entries(quarterNames) as [key, label]}
             <button
@@ -272,7 +272,7 @@
         </nav>
       </div>
 
-      <nav class="dj-nav">
+      <nav class="dj-nav" class:sticky={selectedDJ !== null}>
         {#each shuffledDJs as dj}
           <button
             class="dj-btn"
@@ -593,29 +593,44 @@
     margin-bottom: 2rem;
   }
 
+  .quarter-nav-wrapper.sticky {
+    position: sticky;
+    top: 1rem;
+    z-index: 100;
+    margin-bottom: 2rem;
+  }
+
   .quarter-nav {
     display: inline-flex;
     gap: 0.5rem;
     flex-wrap: wrap;
     padding: 0.5rem;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 25px;
-    backdrop-filter: blur(20px) saturate(180%);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    backdrop-filter: blur(30px) saturate(200%);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.25);
   }
 
   .dj-nav {
     display: flex;
     gap: 0.3rem;
-    margin-bottom: 2rem;
-    margin-top: 1rem;
     flex-wrap: nowrap;
     justify-content: center;
     padding: 0.5rem;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 2rem;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(30px) saturate(200%);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.25);
+  }
+
+  .dj-nav.sticky {
+    position: sticky;
+    top: 1rem;
+    z-index: 100;
+    margin-bottom: 2rem;
   }
 
   .dj-btn {
@@ -989,6 +1004,14 @@
 
     .playlist-header p {
       font-size: 0.85rem;
+    }
+
+    .quarter-nav-wrapper.sticky {
+      top: 0.5rem;
+    }
+
+    .dj-nav.sticky {
+      top: 0.5rem;
     }
 
     .quarter-nav {
